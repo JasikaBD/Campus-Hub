@@ -20,7 +20,7 @@ class _RoutineHomeState extends State<RoutineHome> {
     'Friday': [], 'Saturday': [], 'Sunday': [],
   };
 
-  // Currently selected day (starts on today)
+
   late String selectedDay;
 
   final TextEditingController _controller = TextEditingController();
@@ -28,8 +28,7 @@ class _RoutineHomeState extends State<RoutineHome> {
   @override
   void initState() {
     super.initState();
-    // DateTime.weekday: Monday=1 ... Sunday=7
-    selectedDay = days[DateTime.now().weekday - 1];
+    selectedDay = days[DateTime.now().weekday -1];
   }
 
   String get todayName => days[DateTime.now().weekday - 1];
@@ -53,10 +52,9 @@ class _RoutineHomeState extends State<RoutineHome> {
     final todaysList = routines[todayName]!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Weekly Routine')),
+      appBar: AppBar(title: const Text('Weekly Routine'),),
       body: Column(
         children: [
-          // Day selector (tap a day to view/edit its routine)
           SizedBox(
             height: 60,
             child: ListView(
@@ -78,7 +76,7 @@ class _RoutineHomeState extends State<RoutineHome> {
 
           const Divider(),
 
-          // Add routine input for selectedDay
+
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
@@ -100,7 +98,7 @@ class _RoutineHomeState extends State<RoutineHome> {
             ),
           ),
 
-          // List of routines for selectedDay
+
           Expanded(
             child: ListView.builder(
               itemCount: routines[selectedDay]!.length,
@@ -118,10 +116,10 @@ class _RoutineHomeState extends State<RoutineHome> {
 
           const Divider(),
 
-          // Today's routine preview (loops based on current weekday)
+
           Container(
             width: double.infinity,
-            color: Colors.blue.shade50,
+            color: Colors.purple.shade100,
             padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
