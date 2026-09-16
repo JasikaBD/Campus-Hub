@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'registerpage.dart';
-import 'home.dart';
+import 'student_dashboard.dart';
 //import 'todo.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -194,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const Home()),
+      MaterialPageRoute(builder: (context) => const DashBoard()),
     );
 
   }

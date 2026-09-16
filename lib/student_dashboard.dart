@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'home.dart';
 import 'routine.dart';
 import 'notices.dart';
+import 'profile.dart';
 
 class DashBoard extends StatefulWidget {
   const DashBoard({super.key});
@@ -17,6 +18,8 @@ class _DashBoardState extends State<DashBoard> {
     Home(),
     RoutineScreen(),
     NoticeScreen(),
+    ProfileScreen(),
+
   ];
 
   @override
