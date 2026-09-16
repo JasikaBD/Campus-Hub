@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'login.dart';
-import 'registerpage.dart';
-
 
 void main(){
 
   runApp(const MyApp());
 }
-
-
 
 class MyApp extends StatelessWidget{
 
