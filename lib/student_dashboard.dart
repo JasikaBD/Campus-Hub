@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home.dart';
+import 'routine.dart';
 import 'notices.dart';
 
 class DashBoard extends StatefulWidget {
@@ -14,6 +15,7 @@ class _DashBoardState extends State<DashBoard> {
 
   List<Widget> screens = [
     Home(),
+    RoutineScreen(),
     NoticeScreen(),
   ];
 
