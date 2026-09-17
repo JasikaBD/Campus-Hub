@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'registerpage.dart';
+import 'student_dashboard.dart';
 import 'home.dart';
 //import 'todo.dart';
 
@@ -194,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const Home()),
+      MaterialPageRoute(builder: (context) => DashBoard()),
     );
 
   }
