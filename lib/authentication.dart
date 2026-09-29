@@ -17,7 +17,13 @@ class AuthService {
 
   // Register with email and password
   Future<User?> registerWithEmailAndPassword(
-  String fullName, String studentId,String email, String password) async {
+      String fullName,
+      String studentId,
+      String email,
+      String password,
+      String department,
+      String semester,
+      String studentType,) async {
     try {
       UserCredential result =
       await _auth.createUserWithEmailAndPassword(
@@ -27,6 +33,21 @@ class AuthService {
 
       User? user = result.user;
 
+      if (user != null) {
+
+        await _firestore
+            .collection('students')
+            .doc(user.uid)
+            .set({
+          'fullName': fullName,
+          'studentId': studentId,
+          'email': email,
+          'department': department,
+          'semester': semester,
+          'studentType': studentType,
+        });
+      }
+
       return _userFromFirebaseUser(user);
     } catch (e) {
       print(e.toString());
@@ -34,19 +55,37 @@ class AuthService {
     }
   }
 
-  // Sign in with email and password
-  Future<User?> signInWithEmailAndPassword(
-      String email, String password) async {
+  //Sign in with id and password
+  Future<User?> signInWithStudentIdAndPassword(
+      String studentId, String password) async {
     try {
+
+      QuerySnapshot querySnapshot = await _firestore
+          .collection('students')
+          .where('studentId', isEqualTo: studentId.trim())
+          .limit(1)
+          .get();
+
+      //if not found
+      if (querySnapshot.docs.isEmpty) {
+        print('Student ID not found');
+        return null;
+      }
+
+      //student's Firestore document
+      DocumentSnapshot studentDocument = querySnapshot.docs.first;
+
+
+      String email = studentDocument['email'];
+
+
       UserCredential result =
       await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      User? user = result.user;
-
-      return user;
+      return result.user;
     } catch (e) {
       print(e.toString());
       return null;

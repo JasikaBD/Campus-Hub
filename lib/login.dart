@@ -17,10 +17,17 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   String error='';
-  final _emailController = TextEditingController();
+  final _idController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
   bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _idController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,24 +85,40 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       padding: const EdgeInsets.all(24),
       child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Student Login',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 24),
-            _buildIdField(),
-            const SizedBox(height: 16),
-            _buildPasswordField(),
-            const SizedBox(height: 12),
-            _buildRememberRow(),
-            const SizedBox(height: 24),
-            _buildLoginButton(),
-            const SizedBox(height: 16),
-            _buildRegisterLink(),
-          ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Student Login',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              _buildIdField(),
+
+              const SizedBox(height: 16),
+
+              _buildPasswordField(),
+
+              const SizedBox(height: 12),
+
+              _buildRememberRow(),
+
+              const SizedBox(height: 24),
+
+              _buildLoginButton(),
+
+              const SizedBox(height: 16),
+
+              _buildRegisterLink(),
+            ],
+          ),
         ),
       ),
     );
@@ -103,7 +126,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildIdField() {
     return TextFormField(
-      controller:  _emailController,
+      controller: _idController,
+
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Please enter your Student ID';
+        }
+        return null;
+      },
+
       decoration: InputDecoration(
         hintText: 'Student ID',
         prefixIcon: const Icon(Icons.person_outline),
@@ -122,9 +153,16 @@ class _LoginScreenState extends State<LoginScreen> {
       controller: _passwordController,
       obscureText: _obscurePassword,
 
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter your password';
+        }
+
+        return null;
+      },
+
       decoration: InputDecoration(
         hintText: 'Password',
-
         prefixIcon: const Icon(Icons.lock_outline),
 
         suffixIcon: IconButton(
@@ -133,7 +171,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ? Icons.visibility_off
                 : Icons.visibility,
           ),
-
           onPressed: () {
             setState(() {
               _obscurePassword = !_obscurePassword;
@@ -151,6 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+
   Widget _buildRememberRow() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -196,31 +234,30 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogin() async {
 
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter email and password'),
-        ),
-      );
-
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
+    final studentId = _idController.text.trim();
+    final password = _passwordController.text;
 
-    dynamic result = await AuthService().signInWithEmailAndPassword(
-        email,
-        password,
+    dynamic result =
+    await AuthService().signInWithStudentIdAndPassword(
+      studentId,
+      password,
     );
-
 
     if (result == null) {
 
       setState(() {
-        error = 'Invalid email or password';
+        error = 'Invalid Student ID or Password';
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid Student ID or Password'),
+        ),
+      );
 
     } else {
 
@@ -233,14 +270,6 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     }
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => DashBoard()),
-
-    );
-
-
   }
 
   Widget _buildRegisterLink() {
