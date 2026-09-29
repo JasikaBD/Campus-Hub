@@ -1,11 +1,9 @@
-﻿import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'authentication.dart';
 import 'registerpage.dart';
 import 'student_dashboard.dart';
-import 'routine_home_cr.dart';
 import 'user_role.dart';
-
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,11 +15,17 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   String error = '';
-  // teammate uses student ID field (not email directly)
-  final _idController       = TextEditingController();
+  final _idController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _rememberMe    = false;
+  bool _rememberMe = false;
   bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _idController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,13 +50,17 @@ class _LoginScreenState extends State<LoginScreen> {
           colors: [Color(0xFF6C5CE7), Color(0xFF5849C2)],
         ),
       ),
-      child: const Column(
-        children: [
+      child: Column(
+        children: const [
           Icon(Icons.school, size: 60, color: Colors.white),
           SizedBox(height: 12),
           Text(
             'CampusHub',
-            style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           Text(
             'Stay Connected. Stay Updated.',
@@ -82,7 +90,10 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const Text(
                 'Student Login',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 24),
               _buildIdField(),
@@ -104,8 +115,14 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildIdField() {
     return TextFormField(
       controller: _idController,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Please enter your Student ID or Email';
+        }
+        return null;
+      },
       decoration: InputDecoration(
-        hintText: 'Student ID',
+        hintText: 'Student ID or Email',
         prefixIcon: const Icon(Icons.person_outline),
         filled: true,
         fillColor: Colors.grey.shade100,
@@ -114,7 +131,6 @@ class _LoginScreenState extends State<LoginScreen> {
           borderSide: BorderSide.none,
         ),
       ),
-      validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter your Student ID' : null,
     );
   }
 
@@ -122,12 +138,24 @@ class _LoginScreenState extends State<LoginScreen> {
     return TextFormField(
       controller: _passwordController,
       obscureText: _obscurePassword,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter your password';
+        }
+        return null;
+      },
       decoration: InputDecoration(
         hintText: 'Password',
         prefixIcon: const Icon(Icons.lock_outline),
         suffixIcon: IconButton(
-          icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+          icon: Icon(
+            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+          ),
+          onPressed: () {
+            setState(() {
+              _obscurePassword = !_obscurePassword;
+            });
+          },
         ),
         filled: true,
         fillColor: Colors.grey.shade100,
@@ -136,7 +164,6 @@ class _LoginScreenState extends State<LoginScreen> {
           borderSide: BorderSide.none,
         ),
       ),
-      validator: (v) => (v == null || v.isEmpty) ? 'Enter your password' : null,
     );
   }
 
@@ -148,12 +175,19 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             Checkbox(
               value: _rememberMe,
-              onChanged: (value) => setState(() => _rememberMe = value!),
+              onChanged: (value) {
+                setState(() {
+                  _rememberMe = value!;
+                });
+              },
             ),
             const Text('Remember me'),
           ],
         ),
-        TextButton(onPressed: () {}, child: const Text('Forgot?')),
+        TextButton(
+          onPressed: () {},
+          child: const Text('Forgot?'),
+        ),
       ],
     );
   }
@@ -166,23 +200,24 @@ class _LoginScreenState extends State<LoginScreen> {
         onPressed: _handleLogin,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF6C5CE7),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         child: const Text('Login', style: TextStyle(fontSize: 16, color: Colors.white)),
       ),
     );
   }
 
-  // ── Backend login: uses teammate's signInWithStudentIdAndPassword ──
-  // After auth succeeds, the returned User.email is parsed with UserRole
-  // to determine if the user is a CR or Student → routes accordingly.
   Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
     final studentId = _idController.text.trim();
-    final password  = _passwordController.text;
+    final password = _passwordController.text;
 
-    final User? result = await AuthService().signInWithStudentIdAndPassword(
+    dynamic result = await AuthService().signInWithStudentIdAndPassword(
       studentId,
       password,
     );
@@ -190,38 +225,49 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (result == null) {
-      setState(() => error = 'Invalid Student ID or Password');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid Student ID or Password')),
-      );
-      return;
-    }
+      setState(() {
+        error = 'Invalid Student ID or Password';
+      });
 
-    // The stored email encodes role+class: cr.cse.2.1.seca@gmail.com
-    final email    = result.email ?? '';
-    final userRole = UserRole.fromEmail(email);
-
-    if (userRole == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Account email format not recognised. '
-            'Expected: cr.dept.year.sem.section@gmail.com or student.dept.year.sem.section@gmail.com',
-          ),
+          content: Text('Invalid Student ID or Password'),
         ),
       );
-      return;
-    }
-
-    if (userRole.isCR) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => RoutineHome(userRole: userRole)),
-      );
     } else {
+      String email = result.email ?? '';
+      if (email.isEmpty && studentId.contains('@')) {
+        email = studentId;
+      }
+      if (email.isEmpty) {
+        try {
+          final doc = await FirebaseFirestore.instance
+              .collection('students')
+              .doc(result.uid)
+              .get();
+          if (doc.exists) {
+            email = doc.data()?['email'] ?? '';
+          }
+        } catch (_) {}
+      }
+
+      final userRole = UserRole.fromEmail(email) ??
+          UserRole(
+            isCR: false,
+            department: 'cse',
+            year: '2',
+            semester: '1',
+            section: 'seca',
+            email: email,
+          );
+
+      if (!mounted) return;
+
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => DashBoard(userRole: userRole)),
+        MaterialPageRoute(
+          builder: (context) => DashBoard(userRole: userRole),
+        ),
       );
     }
   }
@@ -242,7 +288,10 @@ class _LoginScreenState extends State<LoginScreen> {
               TextSpan(text: "Don't have an account? "),
               TextSpan(
                 text: 'Register',
-                style: TextStyle(color: Color(0xFF6C5CE7), fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Color(0xFF6C5CE7),
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),

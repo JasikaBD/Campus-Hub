@@ -1,12 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Create user object based on Firebase User
   User? _userFromFirebaseUser(User? user) {
     if (user != null) {
       return user;
@@ -15,18 +13,17 @@ class AuthService {
     }
   }
 
-  // Register with email and password
   Future<User?> registerWithEmailAndPassword(
-      String fullName,
-      String studentId,
-      String email,
-      String password,
-      String department,
-      String semester,
-      String studentType,) async {
+    String fullName,
+    String studentId,
+    String email,
+    String password,
+    String department,
+    String semester,
+    String studentType,
+  ) async {
     try {
-      UserCredential result =
-      await _auth.createUserWithEmailAndPassword(
+      UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -34,11 +31,7 @@ class AuthService {
       User? user = result.user;
 
       if (user != null) {
-
-        await _firestore
-            .collection('students')
-            .doc(user.uid)
-            .set({
+        await _firestore.collection('students').doc(user.uid).set({
           'fullName': fullName,
           'studentId': studentId,
           'email': email,
@@ -50,49 +43,44 @@ class AuthService {
 
       return _userFromFirebaseUser(user);
     } catch (e) {
-      print(e.toString());
       return null;
     }
   }
 
-  //Sign in with id and password
   Future<User?> signInWithStudentIdAndPassword(
-      String studentId, String password) async {
+    String studentId,
+    String password,
+  ) async {
     try {
+      String email = '';
+      if (studentId.trim().contains('@')) {
+        email = studentId.trim();
+      } else {
+        QuerySnapshot querySnapshot = await _firestore
+            .collection('students')
+            .where('studentId', isEqualTo: studentId.trim())
+            .limit(1)
+            .get();
 
-      QuerySnapshot querySnapshot = await _firestore
-          .collection('students')
-          .where('studentId', isEqualTo: studentId.trim())
-          .limit(1)
-          .get();
+        if (querySnapshot.docs.isEmpty) {
+          return null;
+        }
 
-      //if not found
-      if (querySnapshot.docs.isEmpty) {
-        print('Student ID not found');
-        return null;
+        DocumentSnapshot studentDocument = querySnapshot.docs.first;
+        email = studentDocument['email'];
       }
 
-      //student's Firestore document
-      DocumentSnapshot studentDocument = querySnapshot.docs.first;
-
-
-      String email = studentDocument['email'];
-
-
-      UserCredential result =
-      await _auth.signInWithEmailAndPassword(
+      UserCredential result = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       return result.user;
     } catch (e) {
-      print(e.toString());
       return null;
     }
   }
 
-  // Sign out
   Future<void> signOut() async {
     await _auth.signOut();
   }

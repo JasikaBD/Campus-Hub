@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'home.dart';
 import 'routine.dart';
 import 'notices.dart';
@@ -16,8 +16,7 @@ class DashBoard extends StatefulWidget {
 
 class _DashBoardState extends State<DashBoard> {
   int selectedIndex = 0;
-
-  late List<Widget> screens;
+  late final List<Widget> screens;
 
   @override
   void initState() {
@@ -35,34 +34,48 @@ class _DashBoardState extends State<DashBoard> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          "Student DashBoard",
-          style: const TextStyle(color: Colors.grey),
+          widget.userRole.isCR
+              ? "CR Dashboard"
+              : "Student Dashboard",
+          style: const TextStyle(
+            color: Colors.grey,
+          ),
         ),
         actions: [
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.notifications_none, color: Colors.black),
+            icon: const Icon(
+              Icons.notifications_none,
+              color: Colors.black,
+            ),
           ),
         ],
       ),
-
       body: screens[selectedIndex],
-
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selectedIndex,
-        onTap: (index) => setState(() => selectedIndex = index),
+        onTap: (index) {
+          setState(() {
+            selectedIndex = index;
+          });
+        },
         selectedItemColor: const Color(0xFF6A1B9A),
         unselectedItemColor: const Color(0xFFD06BDA),
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: "Routine"),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: "Notices"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_month),
+            label: "Routine",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications),
+            label: "Notices",
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.task), label: "Tasks"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
