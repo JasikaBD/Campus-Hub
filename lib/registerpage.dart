@@ -59,8 +59,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
 
 
-              /*
-              _buildAvatarPlaceholder(),
+
+              //_buildAvatarPlaceholder(),
               const SizedBox(height: 24),
               _buildTextField(
                 controller: _fullNameController,
@@ -68,7 +68,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 icon: Icons.person_outline,
               ),
 
-               */
 
               const SizedBox(height: 30),
               _buildTextField(
@@ -192,41 +191,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required String hint,
     required IconData icon,
     required String? value,
-
     required List<String> items,
-
     required ValueChanged<String?> onChanged,
-}){
-
-
+  }) {
     return DropdownButtonFormField<String>(
+      value: value,
 
-        value : value,
-        decoration: InputDecoration(
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please select $hint';
+        }
+        return null;
+      },
 
-          hintText: hint,
-
-          prefixIcon: Icon(icon),
-
-          filled:  true,
-
-          fillColor: Colors.grey.shade100,
-
-          border: OutlineInputBorder(
-
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: Icon(icon),
+        filled: true,
+        fillColor: Colors.grey.shade100,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
         ),
+      ),
 
+      items: items.map((item) {
+        return DropdownMenuItem(
+          value: item,
+          child: Text(item),
+        );
+      }).toList(),
 
-        items: items.map((item) => DropdownMenuItem(
-
-            value: item,
-            child: Text(item))).toList(),
-
-        onChanged: onChanged,
+      onChanged: onChanged,
     );
   }
 
@@ -274,27 +270,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
       height: 50,
       child: ElevatedButton(
         onPressed: () async {
-         if(_formKey.currentState!.validate()){
-           dynamic result= await AuthService().registerWithEmailAndPassword(
+          if (_formKey.currentState!.validate()) {
 
-               _fullNameController.text,
-               _idController.text,
-               _emailController.text,
-               _passwordController.text,
-           );
-           if(result==null){
-             setState(() => error = 'Registration failed. Please try again.');
-           }else{
-             print('Registration successful');
+            dynamic result =
+            await AuthService().registerWithEmailAndPassword(
+              _fullNameController.text.trim(),
+              _idController.text.trim(),
+              _emailController.text.trim(),
+              _passwordController.text,
+              department!,
+              semester!,
+              studentType!,
+            );
 
-             Navigator.pushReplacement(
-                 context,
-                 MaterialPageRoute(
-                     builder: (context)=> const LoginScreen(),
-                 ),
-             );
-           }
-         }
+            if (result == null) {
+              setState(() {
+                error = 'Registration failed. Please try again.';
+              });
+            } else {
+              print('Registration successful');
+
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const LoginScreen(),
+                ),
+              );
+            }
+          }
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF6C5CE7),
@@ -304,12 +307,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         child: const Text(
           'Register',
-          style: TextStyle(fontSize: 16, color: Colors.white),
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.white,
+          ),
         ),
       ),
     );
   }
-
   Widget _buildLoginLink() {
     return Center(
       child: TextButton(
