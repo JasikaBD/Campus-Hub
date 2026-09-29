@@ -3,10 +3,6 @@ import 'authentication.dart';
 import 'registerpage.dart';
 import 'student_dashboard.dart';
 
-//import 'home.dart';
-
-//import 'todo.dart';
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -17,14 +13,14 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   String error='';
-  final _idController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _idController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -100,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 24),
 
-              _buildIdField(),
+              _buildEmailField(),
 
               const SizedBox(height: 16),
 
@@ -124,20 +120,22 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildIdField() {
+  Widget _buildEmailField() {
     return TextFormField(
-      controller: _idController,
+      controller: _emailController,
+      keyboardType: TextInputType.emailAddress,
 
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
-          return 'Please enter your Student ID';
+          return 'Please enter your email';
         }
+
         return null;
       },
 
       decoration: InputDecoration(
-        hintText: 'Student ID',
-        prefixIcon: const Icon(Icons.person_outline),
+        hintText: 'Email',
+        prefixIcon: const Icon(Icons.email_outlined),
         filled: true,
         fillColor: Colors.grey.shade100,
         border: OutlineInputBorder(
@@ -231,31 +229,30 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-
   Future<void> _handleLogin() async {
 
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    final studentId = _idController.text.trim();
+    final email = _emailController.text.trim();
     final password = _passwordController.text;
 
     dynamic result =
-    await AuthService().signInWithStudentIdAndPassword(
-      studentId,
+    await AuthService().signInWithEmailAndPassword(
+      email,
       password,
     );
 
     if (result == null) {
 
       setState(() {
-        error = 'Invalid Student ID or Password';
+        error = 'Invalid email or password';
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Invalid Student ID or Password'),
+          content: Text('Invalid email or password'),
         ),
       );
 

@@ -55,37 +55,18 @@ class AuthService {
     }
   }
 
-  //Sign in with id and password
-  Future<User?> signInWithStudentIdAndPassword(
-      String studentId, String password) async {
+  Future<User?> signInWithEmailAndPassword(
+      String email, String password) async {
     try {
-
-      QuerySnapshot querySnapshot = await _firestore
-          .collection('students')
-          .where('studentId', isEqualTo: studentId.trim())
-          .limit(1)
-          .get();
-
-      //if not found
-      if (querySnapshot.docs.isEmpty) {
-        print('Student ID not found');
-        return null;
-      }
-
-      //student's Firestore document
-      DocumentSnapshot studentDocument = querySnapshot.docs.first;
-
-
-      String email = studentDocument['email'];
-
-
       UserCredential result =
       await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      return result.user;
+      User? user = result.user;
+
+      return user;
     } catch (e) {
       print(e.toString());
       return null;
