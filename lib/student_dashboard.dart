@@ -4,6 +4,8 @@ import 'routine.dart';
 import 'notices.dart';
 import 'todo.dart';
 import 'profile.dart';
+import 'event.dart';
+
 
 class DashBoard extends StatefulWidget {
   const DashBoard({super.key});
@@ -15,12 +17,19 @@ class DashBoard extends StatefulWidget {
 class _DashBoardState extends State<DashBoard> {
   int selectedIndex=0;
 
-  List<Widget> screens = [
+
+  List<Event> dashboardEvents = List.from(mockEvents);
+
+  late final List<Widget> screens = [
     Home(),
     RoutineScreen(),
     NoticeScreen(),
     TodoScreen(),
+
+    EventScreen(events: dashboardEvents),
+
     ProfileScreen(),
+
 
   ];
 
@@ -78,6 +87,9 @@ class _DashBoardState extends State<DashBoard> {
             label: "Notices",
           ),
           BottomNavigationBarItem(icon: Icon(Icons.task), label: "Tasks"),
+
+          BottomNavigationBarItem(icon: Icon(Icons.event), label: "Events"),
+
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
       ),
