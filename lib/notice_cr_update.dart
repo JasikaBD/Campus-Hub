@@ -1,8 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'user_role.dart';
 
 class Notice extends StatefulWidget {
-  const Notice({super.key});
+  final UserRole userRole;
+  const Notice({super.key, required this.userRole});
 
   @override
   State<Notice> createState() => _NoticeState();
@@ -18,6 +21,7 @@ class _NoticeState extends State<Notice> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(''),
@@ -32,37 +36,28 @@ class _NoticeState extends State<Notice> {
               'AUST Notice',
               style: TextStyle(
                 color: !_showClassNotice ? Colors.deepPurple : Colors.black,
-                fontWeight: !_showClassNotice
-                    ? FontWeight.bold
-                    : FontWeight.normal,
+                fontWeight: !_showClassNotice ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ),
           TextButton.icon(
             onPressed: () => setState(() => _showClassNotice = true),
-            icon: const Icon(
-              Icons.edit_note,
-              color: Colors.deepPurple,
-              size: 18,
-            ),
+            icon: const Icon(Icons.edit_note, color: Colors.deepPurple, size: 18),
             label: Text(
               'Class Notice',
               style: TextStyle(
                 color: _showClassNotice ? Colors.deepPurple : Colors.black,
-                fontWeight: _showClassNotice
-                    ? FontWeight.bold
-                    : FontWeight.normal,
+                fontWeight: _showClassNotice ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ),
         ],
       ),
-
       body: Column(
         children: [
           Expanded(
             child: _showClassNotice
-                ? const ClassNoticeForm()
+                ? ClassNoticeForm(userRole: widget.userRole)
                 : const _AustNoticePlaceholder(),
           ),
         ],
@@ -70,7 +65,6 @@ class _NoticeState extends State<Notice> {
     );
   }
 }
-
 
 class _AustNoticePlaceholder extends StatelessWidget {
   const _AustNoticePlaceholder();
@@ -100,39 +94,48 @@ class _AustNoticePlaceholder extends StatelessWidget {
   }
 }
 
+
 class ClassNoticeForm extends StatefulWidget {
-  const ClassNoticeForm({super.key});
+  final UserRole userRole;
+  const ClassNoticeForm({super.key, required this.userRole});
 
   @override
   State<ClassNoticeForm> createState() => _ClassNoticeFormState();
 }
 
 class _ClassNoticeFormState extends State<ClassNoticeForm> {
-  final _titleController = TextEditingController();
+  final _titleController   = TextEditingController();
   final _messageController = TextEditingController();
   String _noticeType = 'Exam Notice';
 
   final _types = const [
-    'Exam Notice',
-    'Class Notice',
-    'Assignment Notice',
-    'General Notice',
+    'Exam Notice', 'Class Notice', 'Assignment Notice', 'General Notice',
   ];
 
-  void _postNotice() {
+
+  Future<void> _postNotice() async {
     if (_titleController.text.trim().isEmpty ||
         _messageController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in Title and Message.')),
-      );
+        const SnackBar(content: Text('Please fill in Title and Message.')));
       return;
     }
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Notice posted')));
+    await FirebaseFirestore.instance
+        .collection('classes')
+        .doc(widget.userRole.classId)
+        .collection('notices')
+        .add({
+      'type':      _noticeType,
+      'title':     _titleController.text.trim(),
+      'message':   _messageController.text.trim(),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
 
-
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Notice posted')));
+    }
     setState(() {
       _titleController.clear();
       _messageController.clear();
@@ -148,7 +151,7 @@ class _ClassNoticeFormState extends State<ClassNoticeForm> {
         const Text('Notice Type', style: TextStyle(color: Colors.grey)),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
-          value: _noticeType,
+          initialValue: _noticeType,
           items: _types
               .map((t) => DropdownMenuItem(value: t, child: Text(t)))
               .toList(),
@@ -170,9 +173,7 @@ class _ClassNoticeFormState extends State<ClassNoticeForm> {
         TextField(
           controller: _messageController,
           maxLines: 4,
-          decoration: _fieldDecoration(
-            hint: 'Write the notice details here...',
-          ),
+          decoration: _fieldDecoration(hint: 'Write the notice details here...'),
         ),
 
         const SizedBox(height: 28),

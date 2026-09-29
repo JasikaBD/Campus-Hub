@@ -1,31 +1,36 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'user_role.dart';
 
 class ClassCancellation extends StatefulWidget {
-  const ClassCancellation({super.key});
+  final UserRole userRole;
+  const ClassCancellation({super.key, required this.userRole});
 
   @override
   State<ClassCancellation> createState() => _ClassCancellationState();
 }
 
 class _ClassCancellationState extends State<ClassCancellation> {
+  // ── Original teammate data ────────────────────────────────────────
   final List<String> courses = [
-    'Database Systems',
-    'Data Structures',
-    'Operating Systems',
-    'Computer Networks',
+    'Database Systems', 'Data Structures', 'Operating Systems', 'Computer Networks',
   ];
 
   final List<String> timeSlots = [
-    '10:00 AM - 11:30 AM',
-    '11:30 AM - 1:00 PM',
-    '2:00 PM - 3:30 PM',
-    '3:30 PM - 5:00 PM',
+    '10:00 AM - 11:30 AM', '11:30 AM - 1:00 PM',
+    '2:00 PM - 3:30 PM',   '3:30 PM - 5:00 PM',
   ];
 
   String? selectedCourse;
   String? selectedTimeSlot;
   DateTime? selectedDate;
   final TextEditingController _reasonController = TextEditingController();
+
+  // ── Firestore ref ─────────────────────────────────────────────────
+  CollectionReference get _col => FirebaseFirestore.instance
+      .collection('classes')
+      .doc(widget.userRole.classId)
+      .collection('cancellations');
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -34,25 +39,41 @@ class _ClassCancellationState extends State<ClassCancellation> {
       firstDate: DateTime.now(),
       lastDate: DateTime(2100),
     );
-    if (picked != null) {
-      setState(() => selectedDate = picked);
-    }
+    if (picked != null) setState(() => selectedDate = picked);
   }
 
-  void _cancelClass() {
+  // ── Backend: save to Firestore instead of just showing snackbar ──
+  Future<void> _cancelClass() async {
     if (selectedCourse == null || selectedDate == null || selectedTimeSlot == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in course, date and time slot.')),
-      );
+        const SnackBar(content: Text('Please fill in course, date and time slot.')));
       return;
     }
 
+    await _col.add({
+      'course':    selectedCourse,
+      'date':      '${selectedDate!.day} ${_monthName(selectedDate!.month)} ${selectedDate!.year}',
+      'timeSlot':  selectedTimeSlot,
+      'reason':    _reasonController.text.trim(),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Class cancelled successfully.')),
-    );
+    // ── Same snackbar as original ─────────────────────────────────
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Class cancelled successfully.')));
+    }
+
+    // Reset form
+    setState(() {
+      selectedCourse   = null;
+      selectedDate     = null;
+      selectedTimeSlot = null;
+      _reasonController.clear();
+    });
   }
 
+  // ── Original teammate build() exactly ────────────────────────────
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -61,17 +82,13 @@ class _ClassCancellationState extends State<ClassCancellation> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          Row(
+          const Row(
             children: [
-
-              const Text(
-                'Cancel Class',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
+              Text('Cancel Class',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 20),
-
 
           const Text('Select Course', style: TextStyle(color: Colors.grey)),
           const SizedBox(height: 6),
@@ -86,7 +103,6 @@ class _ClassCancellationState extends State<ClassCancellation> {
           ),
           const SizedBox(height: 20),
 
-
           const Text('Select Date', style: TextStyle(color: Colors.grey)),
           const SizedBox(height: 6),
           InkWell(
@@ -96,18 +112,15 @@ class _ClassCancellationState extends State<ClassCancellation> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    selectedDate == null
-                        ? 'Choose a date'
-                        : '${selectedDate!.day} ${_monthName(selectedDate!.month)} ${selectedDate!.year}',
-                  ),
+                  Text(selectedDate == null
+                      ? 'Choose a date'
+                      : '${selectedDate!.day} ${_monthName(selectedDate!.month)} ${selectedDate!.year}'),
                   const Icon(Icons.calendar_today, size: 18),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 20),
-
 
           const Text('Select Time Slot', style: TextStyle(color: Colors.grey)),
           const SizedBox(height: 6),
@@ -122,7 +135,6 @@ class _ClassCancellationState extends State<ClassCancellation> {
           ),
           const SizedBox(height: 20),
 
-
           const Text('Reason (Optional)', style: TextStyle(color: Colors.grey)),
           const SizedBox(height: 6),
           TextField(
@@ -135,7 +147,6 @@ class _ClassCancellationState extends State<ClassCancellation> {
           ),
           const SizedBox(height: 30),
 
-
           SizedBox(
             width: double.infinity,
             height: 50,
@@ -143,8 +154,7 @@ class _ClassCancellationState extends State<ClassCancellation> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                    borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: _cancelClass,
               child: const Text(
@@ -160,8 +170,8 @@ class _ClassCancellationState extends State<ClassCancellation> {
 
   String _monthName(int month) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan','Feb','Mar','Apr','May','Jun',
+      'Jul','Aug','Sep','Oct','Nov','Dec',
     ];
     return months[month - 1];
   }
