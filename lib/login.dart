@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'authentication.dart';
 import 'registerpage.dart';
 import 'student_dashboard.dart';
-import 'home.dart';
+
+//import 'home.dart';
+
 //import 'todo.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -12,7 +15,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _idController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  String error='';
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
   bool _obscurePassword = true;
@@ -98,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildIdField() {
     return TextFormField(
-      controller: _idController,
+      controller:  _emailController,
       decoration: InputDecoration(
         hintText: 'Student ID',
         prefixIcon: const Icon(Icons.person_outline),
@@ -116,19 +121,29 @@ class _LoginScreenState extends State<LoginScreen> {
     return TextFormField(
       controller: _passwordController,
       obscureText: _obscurePassword,
+
       decoration: InputDecoration(
         hintText: 'Password',
+
         prefixIcon: const Icon(Icons.lock_outline),
+
         suffixIcon: IconButton(
-          icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+          icon: Icon(
+            _obscurePassword
+                ? Icons.visibility_off
+                : Icons.visibility,
+          ),
+
           onPressed: () {
             setState(() {
               _obscurePassword = !_obscurePassword;
             });
           },
         ),
+
         filled: true,
         fillColor: Colors.grey.shade100,
+
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -136,7 +151,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
   Widget _buildRememberRow() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -180,23 +194,52 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
 
-  void _handleLogin(){
-    final id = _idController.text.trim();
-    final password = _passwordController.text.trim();
+  Future<void> _handleLogin() async {
 
-    if(id.isEmpty || password.isEmpty){
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
 
+    if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter id and password')),
+        const SnackBar(
+          content: Text('Please enter email and password'),
+        ),
       );
+
       return;
     }
 
 
+    dynamic result = await AuthService().signInWithEmailAndPassword(
+        email,
+        password,
+    );
+
+
+    if (result == null) {
+
+      setState(() {
+        error = 'Invalid email or password';
+      });
+
+    } else {
+
+      print('Login successful');
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const DashBoard(),
+        ),
+      );
+    }
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => DashBoard()),
+
     );
+
 
   }
 

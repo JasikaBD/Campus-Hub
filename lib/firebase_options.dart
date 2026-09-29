@@ -63,7 +63,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '826009203423',
     projectId: 'campus-hub-d5c4d',
     storageBucket: 'campus-hub-d5c4d.firebasestorage.app',
+//<<<<<<< HEAD
     iosClientId: '826009203423-c6ri10epacq37vel7lbl9m3m8cl79hds.apps.googleusercontent.com',
+//=======
+//>>>>>>> 4764df2212f2a7bf62ae5f6373a01076aa9a40fa
     iosBundleId: 'com.example.campusHub',
   );
 
@@ -73,7 +76,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '826009203423',
     projectId: 'campus-hub-d5c4d',
     storageBucket: 'campus-hub-d5c4d.firebasestorage.app',
+//<<<<<<< HEAD
     iosClientId: '826009203423-c6ri10epacq37vel7lbl9m3m8cl79hds.apps.googleusercontent.com',
+//=======
+//>>>>>>> 4764df2212f2a7bf62ae5f6373a01076aa9a40fa
     iosBundleId: 'com.example.campusHub',
   );
 

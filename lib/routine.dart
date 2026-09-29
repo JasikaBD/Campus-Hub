@@ -26,6 +26,7 @@ class _RoutineScreenState extends State<RoutineScreen> {
 
     List<Map<String, String>> currentClasses = routine[selectedDayName] ?? [];
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           "Class Routine",
@@ -79,6 +80,20 @@ class _RoutineScreenState extends State<RoutineScreen> {
               ],
             ),
           ),
+          SizedBox(height: 25,),
+          for (var item in currentClasses)
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: ListTile(
+                title: Text(
+                  item["subject"] ?? "",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: item.containsKey("time")
+                    ? Text("${item['time']} | ${item['room']}")
+                    : null,
+              ),
+            ),
         ],
       ),
     );
