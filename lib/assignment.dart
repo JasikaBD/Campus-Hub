@@ -137,6 +137,35 @@ class _AssignmentScreenState extends State<AssignmentScreen> {
     );
   }
 
+  Future<void> _deleteAssignment(String id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Assignment'),
+        content: const Text('Are you sure you want to delete this assignment?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await FirebaseFirestore.instance
+          .collection('classes')
+          .doc(widget.userRole.classId)
+          .collection('assignments')
+          .doc(id)
+          .delete();
+    }
+  }
+
   Widget buildAddButton() {
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -302,6 +331,14 @@ class _AssignmentScreenState extends State<AssignmentScreen> {
                             : Colors.red,
                       ),
                     ),
+                    if (widget.userRole.isCR) ...[
+                      const SizedBox(width: 6),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline,
+                            color: Colors.redAccent, size: 20),
+                        onPressed: () => _deleteAssignment(assignment.id),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -368,6 +405,47 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        actions: [
+          if (widget.userRole.isCR)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Assignment'),
+                    content: const Text(
+                        'Are you sure you want to delete this assignment?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red),
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Delete',
+                            style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true && assignment.id.isNotEmpty) {
+                  await FirebaseFirestore.instance
+                      .collection('classes')
+                      .doc(widget.userRole.classId)
+                      .collection('assignments')
+                      .doc(assignment.id)
+                      .delete();
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                }
+              },
+            ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -392,7 +470,9 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
             const SizedBox(height: 15),
             buildLabel('Description'),
             Text(
-              assignment.description,
+              assignment.description.isEmpty
+                  ? 'No description provided.'
+                  : assignment.description,
               style: const TextStyle(fontSize: 15),
             ),
             const SizedBox(height: 20),
@@ -401,7 +481,7 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
               assignment.status,
               style: TextStyle(
                 fontSize: 15,
-                fontWeight: FontWeight.normal,
+                fontWeight: FontWeight.bold,
                 color: assignment.status == 'Submitted'
                     ? Colors.green
                     : Colors.red,
@@ -409,27 +489,26 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
             ),
             const Spacer(),
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed:
-                    assignment.status == 'Pending' ? submitAssignment : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
-                  disabledBackgroundColor: Colors.grey,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            if (widget.userRole.isCR)
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: submitAssignment,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    assignment.status == 'Pending'
+                        ? 'Mark as Completed / Submitted'
+                        : 'Reopen (Mark as Pending)',
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ),
-                child: Text(
-                  assignment.status == 'Pending'
-                      ? 'Submit Assignment'
-                      : 'Already Submitted',
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
-                ),
               ),
-            ),
           ],
         ),
       ),

@@ -20,16 +20,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
 
   String? department;
+  String? year;
   String? semester;
+  String? section;
   String? studentType;
 
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
-  String error='';
+  String error = '';
 
   @override
   void dispose() {
-
     _fullNameController.dispose();
     _idController.dispose();
     _emailController.dispose();
@@ -41,15 +43,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
       appBar: AppBar(
         title: const Text('Create Account'),
         backgroundColor: Colors.deepOrangeAccent,
         foregroundColor: Colors.white,
-
         centerTitle: true,
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
@@ -57,85 +56,103 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-
-
-              //_buildAvatarPlaceholder(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 10),
               _buildTextField(
                 controller: _fullNameController,
                 hint: 'Full Name',
                 icon: Icons.person_outline,
               ),
-
-
-              const SizedBox(height: 30),
+              const SizedBox(height: 16),
               _buildTextField(
                 controller: _idController,
                 hint: 'Student ID',
                 icon: Icons.badge_outlined,
               ),
-
               const SizedBox(height: 16),
               _buildTextField(
                 controller: _emailController,
                 hint: 'Email',
                 icon: Icons.email_outlined,
               ),
-
-
               const SizedBox(height: 16),
-
               buildDropDown(
-                  hint: 'Department',
-                  icon: Icons.account_balance_outlined,
-
-                  value: department,
-
-                  items: const['CSE' , 'EEE' , 'ME' , 'CIVIL' , 'TEXTILE' , 'IPE' , 'BBA'],
-                  onChanged: (value) => setState(()=> department = value),
+                hint: 'Department',
+                icon: Icons.account_balance_outlined,
+                value: department,
+                items: const [
+                  'CSE',
+                  'EEE',
+                  'ME',
+                  'CIVIL',
+                  'TEXTILE',
+                  'IPE',
+                  'BBA'
+                ],
+                onChanged: (value) => setState(() => department = value),
               ),
-
-
-
-
               const SizedBox(height: 16),
-
               buildDropDown(
-                  hint: 'Semester',
-                  icon: Icons.calendar_today,
-                  value: semester,
-
-                  items: const ['1st' , '2nd' , '3rd' , '4th' , '5th' , '6th' , '7th' , '8th'],
-                  onChanged: (value) => setState(() => semester = value ),
-
+                hint: 'Academic Year',
+                icon: Icons.calendar_month_outlined,
+                value: year,
+                items: const [
+                  '1st Year',
+                  '2nd Year',
+                  '3rd Year',
+                  '4th Year'
+                ],
+                onChanged: (value) => setState(() => year = value),
               ),
-
-
               const SizedBox(height: 16),
-
               buildDropDown(
-                  hint: 'Student Type',
-                  icon: Icons.person_2_outlined,
-                  value: studentType,
-                  items: const ['Admin (CR) ' , 'Normal Student'],
-                  onChanged: (value) => setState(()=> studentType = value),
+                hint: 'Semester',
+                icon: Icons.calendar_today,
+                value: semester,
+                items: const [
+                  '1st Semester',
+                  '2nd Semester'
+                ],
+                onChanged: (value) => setState(() => semester = value),
               ),
-
+              const SizedBox(height: 16),
+              buildDropDown(
+                hint: 'Section',
+                icon: Icons.groups_outlined,
+                value: section,
+                items: const [
+                  'Section A',
+                  'Section B',
+                  'Section C',
+                  'Section D'
+                ],
+                onChanged: (value) => setState(() => section = value),
+              ),
+              const SizedBox(height: 16),
+              buildDropDown(
+                hint: 'Role (CR or Student)',
+                icon: Icons.person_2_outlined,
+                value: studentType,
+                items: const [
+                  'Class Representative (CR)',
+                  'Student'
+                ],
+                onChanged: (value) => setState(() => studentType = value),
+              ),
               const SizedBox(height: 16),
               _buildPasswordField(),
-
               const SizedBox(height: 24),
               _buildRegisterButton(),
-
               const SizedBox(height: 16),
               _buildLoginLink(),
-
-              SizedBox(height: 12.0),
-              Text(
-                error,
-                style: TextStyle(color: Colors.red, fontSize: 14.0),
-              ),
+              if (error.isNotEmpty) ...[
+                const SizedBox(height: 12.0),
+                Center(
+                  child: Text(
+                    error,
+                    style: const TextStyle(color: Colors.red, fontSize: 14.0),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -195,7 +212,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required ValueChanged<String?> onChanged,
   }) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
 
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -269,49 +286,79 @@ class _RegisterScreenState extends State<RegisterScreen> {
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: () async {
-          if (_formKey.currentState!.validate()) {
+        onPressed: _isLoading
+            ? null
+            : () async {
+                if (_formKey.currentState!.validate()) {
+                  setState(() {
+                    _isLoading = true;
+                    error = '';
+                  });
 
-            dynamic result =
-            await AuthService().registerWithEmailAndPassword(
-              _fullNameController.text.trim(),
-              _idController.text.trim(),
-              _emailController.text.trim(),
-              _passwordController.text,
-              department!,
-              semester!,
-              studentType!,
-            );
+                  final bool isCR = studentType?.contains('(CR)') ?? false;
 
-            if (result == null) {
-              setState(() {
-                error = 'Registration failed. Please try again.';
-              });
-            } else {
-              print('Registration successful');
+                  dynamic result =
+                      await AuthService().registerWithEmailAndPassword(
+                    fullName: _fullNameController.text.trim(),
+                    studentId: _idController.text.trim(),
+                    email: _emailController.text.trim(),
+                    password: _passwordController.text,
+                    department: department!,
+                    year: year!,
+                    semester: semester!,
+                    section: section!,
+                    studentType: studentType!,
+                    isCR: isCR,
+                  );
 
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const LoginScreen(),
-                ),
-              );
-            }
-          }
-        },
+                  if (!mounted) return;
+                  setState(() {
+                    _isLoading = false;
+                  });
+
+                  if (result == null) {
+                    setState(() {
+                      error = 'Registration failed. Please check your credentials and try again.';
+                    });
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Registration successful! Please login.'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
+                    );
+                  }
+                }
+              },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF6C5CE7),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: const Text(
-          'Register',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.white,
-          ),
-        ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : const Text(
+                'Register',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
+              ),
       ),
     );
   }

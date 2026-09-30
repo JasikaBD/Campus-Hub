@@ -352,32 +352,75 @@ class _RoutineScreenState extends State<RoutineScreen> {
                 }
 
                 try {
+                  final classId = widget.userRole.classId.trim().isEmpty
+                      ? 'cse_1_1_a'
+                      : widget.userRole.classId.trim();
+
                   final docRef = FirebaseFirestore.instance
                       .collection('classes')
-                      .doc(widget.userRole.classId)
+                      .doc(classId)
                       .collection('routines')
                       .doc(day);
 
-                  await docRef.set({
-                    'classes': FieldValue.arrayUnion([
-                      {
-                        'subject': subject,
-                        'time': time,
-                        'room': room,
+                  // Read existing classes safely to prevent arrayUnion errors on corrupted or legacy fields
+                  final docSnapshot = await docRef.get();
+                  List<Map<String, dynamic>> currentClasses = [];
+                  if (docSnapshot.exists && docSnapshot.data() != null) {
+                    final data = docSnapshot.data()!;
+                    final raw = data['classes'] ?? data['items'];
+                    if (raw is List) {
+                      for (var item in raw) {
+                        if (item is Map) {
+                          currentClasses.add(Map<String, dynamic>.from(item));
+                        }
                       }
-                    ]),
+                    }
+                  }
+
+                  currentClasses.add({
+                    'subject': subject,
+                    'time': time,
+                    'room': room,
+                  });
+
+                  await docRef.set({
+                    'classes': currentClasses,
+                    'updatedAt': FieldValue.serverTimestamp(),
                   }, SetOptions(merge: true));
 
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Routine added for $day (${widget.userRole.classId})')),
+                      SnackBar(
+                        backgroundColor: Colors.green,
+                        content: Text('Routine added for $day ($classId)'),
+                      ),
+                    );
+                  }
+                } on FirebaseException catch (e) {
+                  debugPrint('Firebase routine save error: ${e.code} - ${e.message}');
+                  if (context.mounted) {
+                    String message = e.message ?? e.toString();
+                    if (e.code == 'permission-denied') {
+                      message =
+                          'Permission Denied: Check Firestore rules in Firebase Console to allow write access to "classes" collection.';
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 5),
+                        content: Text('Firebase error (${e.code}): $message'),
+                      ),
                     );
                   }
                 } catch (e) {
+                  debugPrint('Routine save general error: $e');
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to save to Firebase: $e')),
+                      SnackBar(
+                        backgroundColor: Colors.red,
+                        content: Text('Failed to save to Firebase: $e'),
+                      ),
                     );
                   }
                 }
@@ -392,25 +435,55 @@ class _RoutineScreenState extends State<RoutineScreen> {
 
   Future<void> _deleteRoutineItem(String day, Map<String, String> item) async {
     try {
+      final classId = widget.userRole.classId.trim().isEmpty
+          ? 'cse_1_1_a'
+          : widget.userRole.classId.trim();
+
       final docRef = FirebaseFirestore.instance
           .collection('classes')
-          .doc(widget.userRole.classId)
+          .doc(classId)
           .collection('routines')
           .doc(day);
 
-      await docRef.set({
-        'classes': FieldValue.arrayRemove([item])
-      }, SetOptions(merge: true));
+      final docSnapshot = await docRef.get();
+      if (docSnapshot.exists && docSnapshot.data() != null) {
+        final data = docSnapshot.data()!;
+        final raw = data['classes'] ?? data['items'];
+        if (raw is List) {
+          final updatedList = raw.where((c) {
+            if (c is Map) {
+              return c['subject'] != item['subject'] ||
+                  c['time'] != item['time'] ||
+                  c['room'] != item['room'];
+            }
+            return true;
+          }).toList();
+
+          await docRef.set({'classes': updatedList}, SetOptions(merge: true));
+        }
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Routine item removed')),
         );
       }
+    } on FirebaseException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.red,
+            content: Text('Firebase error: ${e.message ?? e.code}'),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete: $e')),
+          SnackBar(
+            backgroundColor: Colors.red,
+            content: Text('Failed to delete: $e'),
+          ),
         );
       }
     }

@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'user_role.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -13,15 +15,18 @@ class AuthService {
     }
   }
 
-  Future<User?> registerWithEmailAndPassword(
-    String fullName,
-    String studentId,
-    String email,
-    String password,
-    String department,
-    String semester,
-    String studentType,
-  ) async {
+  Future<User?> registerWithEmailAndPassword({
+    required String fullName,
+    required String studentId,
+    required String email,
+    required String password,
+    required String department,
+    required String year,
+    required String semester,
+    required String section,
+    required String studentType,
+    required bool isCR,
+  }) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -31,20 +36,49 @@ class AuthService {
       User? user = result.user;
 
       if (user != null) {
+        final classId = UserRole.buildClassId(
+          department: department,
+          year: year,
+          semester: semester,
+          section: section,
+        );
+
         await _firestore.collection('students').doc(user.uid).set({
           'fullName': fullName,
           'studentId': studentId,
           'email': email,
           'department': department,
+          'year': year,
           'semester': semester,
+          'section': section,
           'studentType': studentType,
+          'isCR': isCR,
+          'classId': classId,
+          'createdAt': FieldValue.serverTimestamp(),
         });
       }
 
       return _userFromFirebaseUser(user);
     } catch (e) {
+      debugPrint('Registration error: $e');
       return null;
     }
+  }
+
+  Future<UserRole?> getUserRole(User user) async {
+    try {
+      final doc = await _firestore.collection('students').doc(user.uid).get();
+      if (doc.exists && doc.data() != null) {
+        return UserRole.fromFirestore(doc.data()!, email: user.email ?? '');
+      }
+    } catch (e) {
+      debugPrint('Error getting user role: $e');
+    }
+
+    if (user.email != null && user.email!.isNotEmpty) {
+      return UserRole.fromEmail(user.email!);
+    }
+    return null;
   }
 
   Future<User?> signInWithStudentIdAndPassword(

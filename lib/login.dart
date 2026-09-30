@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'authentication.dart';
 import 'registerpage.dart';
 import 'student_dashboard.dart';
@@ -192,19 +191,31 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  bool _isLoading = false;
+
   Widget _buildLoginButton() {
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: _handleLogin,
+        onPressed: _isLoading ? null : _handleLogin,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF6C5CE7),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: const Text('Login', style: TextStyle(fontSize: 16, color: Colors.white)),
+        child: _isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : const Text('Login',
+                style: TextStyle(fontSize: 16, color: Colors.white)),
       ),
     );
   }
@@ -214,18 +225,25 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+      error = '';
+    });
+
     final studentId = _idController.text.trim();
     final password = _passwordController.text;
 
-    dynamic result = await AuthService().signInWithStudentIdAndPassword(
+    final authService = AuthService();
+    final user = await authService.signInWithStudentIdAndPassword(
       studentId,
       password,
     );
 
     if (!mounted) return;
 
-    if (result == null) {
+    if (user == null) {
       setState(() {
+        _isLoading = false;
         error = 'Invalid Student ID or Password';
       });
 
@@ -234,42 +252,38 @@ class _LoginScreenState extends State<LoginScreen> {
           content: Text('Invalid Student ID or Password'),
         ),
       );
-    } else {
-      String email = result.email ?? '';
+      return;
+    }
+
+    UserRole? userRole = await authService.getUserRole(user);
+
+    if (userRole == null) {
+      String email = user.email ?? '';
       if (email.isEmpty && studentId.contains('@')) {
         email = studentId;
       }
-      if (email.isEmpty) {
-        try {
-          final doc = await FirebaseFirestore.instance
-              .collection('students')
-              .doc(result.uid)
-              .get();
-          if (doc.exists) {
-            email = doc.data()?['email'] ?? '';
-          }
-        } catch (_) {}
-      }
-
-      final userRole = UserRole.fromEmail(email) ??
+      userRole = UserRole.fromEmail(email) ??
           UserRole(
             isCR: false,
-            department: 'cse',
-            year: '2',
-            semester: '1',
-            section: 'seca',
+            department: 'CSE',
+            year: '1st Year',
+            semester: '1st Semester',
+            section: 'Section A',
             email: email,
           );
-
-      if (!mounted) return;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => DashBoard(userRole: userRole),
-        ),
-      );
     }
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+    });
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DashBoard(userRole: userRole!),
+      ),
+    );
   }
 
   Widget _buildRegisterLink() {

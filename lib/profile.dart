@@ -28,27 +28,50 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
+            if (userRole.fullName.isNotEmpty) ...[
+              Text(
+                userRole.fullName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+            ],
             Text(
               userRole.email,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade700,
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              userRole.isCR ? 'Class Representative (CR)' : 'Student',
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF6A1B9A),
-                fontWeight: FontWeight.w600,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: userRole.isCR ? Colors.purple.shade50 : Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: userRole.isCR ? Colors.purple.shade200 : Colors.blue.shade200,
+                ),
+              ),
+              child: Text(
+                userRole.isCR ? 'Class Representative (CR)' : 'Student',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: userRole.isCR ? const Color(0xFF6A1B9A) : Colors.blue.shade800,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const SizedBox(height: 24),
+            if (userRole.studentId.isNotEmpty)
+              _infoRow("Student ID", userRole.studentId),
             _infoRow("Department", userRole.department.toUpperCase()),
-            _infoRow("Semester", userRole.semester.isEmpty ? userRole.year : "${userRole.year}.${userRole.semester}"),
-            _infoRow("Section", userRole.section.toUpperCase()),
-            _infoRow("Class ID", userRole.classId),
+            _infoRow("Academic Year", userRole.year),
+            _infoRow("Semester", userRole.semester),
+            _infoRow("Section", userRole.section),
+            _infoRow("Shared Class ID", userRole.classId),
             const Spacer(),
             SizedBox(
               width: double.infinity,
