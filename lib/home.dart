@@ -76,58 +76,8 @@ class _HomeState extends State<Home> {
                   ),
                 ],
               ),
-              const SizedBox(height: 30),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(25),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF6A1B9A),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          "Attendance",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        Text(
-                          "83%",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 45,
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        Text(
-                          "View Details",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 90,
-                      width: 90,
-                      child: CircularProgressIndicator(
-                        value: 0.83,
-                        strokeWidth: 10,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 50),
+
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('classes')
