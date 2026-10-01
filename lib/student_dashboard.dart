@@ -5,7 +5,7 @@ import 'notices.dart';
 import 'todo.dart';
 import 'profile.dart';
 import 'user_role.dart';
-//import 'event.dart';
+import 'event.dart';
 
 
 class DashBoard extends StatefulWidget {
@@ -24,24 +24,18 @@ class _DashBoardState extends State<DashBoard> {
   late final List<Widget> screens;
 
 
-  //late final List<Event> dashboardEvents;   //new add
-
 
   @override
   void initState() {
     super.initState();
 
 
-
-
-    //dashboardEvents = List.from(mockEvents);    //new add
-
     screens = [
       Home(userRole: widget.userRole),
       RoutineScreen(userRole: widget.userRole),
       NoticeScreen(userRole: widget.userRole),
       TodoScreen(userRole: widget.userRole),
-     // EventScreen(events: dashboardEvents),       //new add
+      EventScreen(userRole: widget.userRole),       //new add
       ProfileScreen(userRole: widget.userRole),
     ];
   }
@@ -95,7 +89,7 @@ class _DashBoardState extends State<DashBoard> {
           ),
           BottomNavigationBarItem(icon: Icon(Icons.task), label: "Tasks"),
 
-         // BottomNavigationBarItem(icon: Icon(Icons.event), label: "Events"),    //event navigator
+          BottomNavigationBarItem(icon: Icon(Icons.event), label: "Events"),    //event navigator
 
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
