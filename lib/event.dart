@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/*import 'package:flutter/material.dart';
 
 
 enum EventCategory {seminar , workshop , cultural}
@@ -443,8 +443,6 @@ class _EventScreenState extends State<EventScreen>{
 
         centerTitle: true,
 
-        leading: const BackButton(color: Colors.black),
-
         title: const Text('Events',
 
           style: TextStyle(color: Colors.black , fontWeight: FontWeight.w600 , fontSize: 20),
@@ -737,3 +735,6 @@ class EventTile extends StatelessWidget{
   }
 
 }
+
+
+ */

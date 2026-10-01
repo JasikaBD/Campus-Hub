@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'login.dart';
+import 'splash.dart';
+//import 'login.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +26,7 @@ class MyApp extends StatelessWidget{
         primaryColor: const Color(0xFF6C5CE7),
         scaffoldBackgroundColor: const Color(0xFF6C5CE7),
       ),
-      home: const LoginScreen(),
+      home: const Splash(),
     );
   }
 }
