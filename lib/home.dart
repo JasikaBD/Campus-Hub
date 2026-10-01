@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'assignment.dart';
 import 'user_role.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class Home extends StatefulWidget {
   final UserRole userRole;
@@ -13,7 +12,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  String userName = "Student";
+
   final List<String> days = const [
     "Monday",
     "Tuesday",
@@ -26,28 +25,6 @@ class _HomeState extends State<Home> {
 
   String get todayName => days[DateTime.now().weekday - 1];
 
-  @override
-  void initState() {
-    super.initState();
-    getUserName();
-  }
-
-  Future<void> getUserName() async {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user != null) {
-      final doc = await FirebaseFirestore.instance
-          .collection('students')
-          .doc(user.uid)
-          .get();
-
-      if (doc.exists && doc.data() != null) {
-        setState(() {
-          userName = doc.data()!['fullName'] ?? "Student";
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +51,9 @@ class _HomeState extends State<Home> {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        userName,
+                        widget.userRole.fullName.isNotEmpty
+                            ? widget.userRole.fullName
+                            : (widget.userRole.isCR ? "CR" : "Student"),
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
