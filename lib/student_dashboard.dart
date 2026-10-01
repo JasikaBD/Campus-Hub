@@ -40,7 +40,7 @@ class _DashBoardState extends State<DashBoard> {
       Home(userRole: widget.userRole),
       RoutineScreen(userRole: widget.userRole),
       NoticeScreen(userRole: widget.userRole),
-      const TodoScreen(),
+      TodoScreen(userRole: widget.userRole),
      // EventScreen(events: dashboardEvents),       //new add
       ProfileScreen(userRole: widget.userRole),
     ];
